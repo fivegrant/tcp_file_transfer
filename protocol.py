@@ -8,6 +8,8 @@
 """
 
 import struct
+import os
+import hashlib
 
 # messages
 HANDSHAKE    = 0x01
@@ -21,5 +23,23 @@ CONN_SUCCESS = 0xf0
 ERR_MODE     = 0xF1
 ERR_FILENAME = 0xF2
 
+# one byte -- 0x00-0xFF
 messages = struct.Struct('B')
-checksum = struct.Struct("q")
+# one byte (filename length) 0 to 255;
+# one 32-char md5 hexdigest
+# 32 bytes allocated for filename
+# unsigned long long for filesize
+metadata = struct.Struct("B32s32sQ")
+
+# https://stackoverflow.com/questions/3431825/generating-an-md5-checksum-of-a-file
+def pack_metadata(filename):
+  length = len(filename)
+  if length > 32:
+    raise Exception("Filename too big.")
+  size = os.stat(filename).st_size
+  md5 = hashlib.md5()
+  with open(filename, 'rb') as file:
+    for chunk in iter(lambda: file.read(4096), b""):
+      md5.update(chunk)
+  hexdigest = md5.hexdigest()
+  return metadata.pack(length, hexdigest.encode(), filename.encode(), size)
