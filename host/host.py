@@ -5,7 +5,7 @@ from protocol import *
 class Host:
   def __init__(self, address, port, buffer_size):
     self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.bind(address, port)
+    sock.bind((address, port))
     self.buffer_size = buffer_size
     self.client = None
     self.connection = None
@@ -15,10 +15,8 @@ class Host:
     if connection == None:
         self.sock.listen(connection_patience)
         self.connection, self.client = self.sock.accept()
-        stream = self.connection.recv(self.buffer_size)
-        if identify(stream) != "handshake": 
-            # Reject if bad connection
-            # ?? DO I NEED `sock.connect()`
+        stream = self.connection.recv(1)
+        if stream.decode() != HANDSHAKE: 
             self.sock.send(ERR_MODE.encode())
             self.client = None
             self.connection = None
@@ -32,21 +30,14 @@ class Host:
 
   def download(self, connection_patience = 1):
     if self.handshake():
-      ### PROBABLY UNNECCESSARY MIGHT DELETE LATER
-      #self.sock.listen(connection_patience)
-      #self.connection, check = self.sock.accept()
-      #if check != self.client:
-      #  self.sock.send(ERR_MODE.encode())
-      ### END of potentially useless code
-
-      comms = self.connection.recv(buffer_size)
-      if identify(meta) != "send":
+      comms = self.connection.recv(1)
+      if meta.decode() != BEGIN_SEND:
         host.send(ERR_MODE.encode())
         return False
 
-      comms = self.connection.recv(buffer_size)
-      while identfy(comms) != "end":
-        if decode(comms) != "bof":
+      comms = self.connection.recv(1)
+      while comms.decode() != END_SEND:
+        if comms.decode() != BEGIN_FILE:
           host.send(ERR_MODE.encode())
           continue
 
@@ -56,7 +47,7 @@ class Host:
 
         process = ""
         stream = self.connection.recv(buffer_size).decode()
-        while protocol.decode[stream.decode()] != "eof":
+        while stream.decode() != END_FILE:
           process += stream.decode()  
           stream = self.connection.recv(buffer_size).decode()
 
@@ -86,4 +77,4 @@ class Host:
 
 
 # References:
-# https://docs.python.org/3/howto/sockets.html
+#   https://docs.python.org/3/howto/sockets.html
