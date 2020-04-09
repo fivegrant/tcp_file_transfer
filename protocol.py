@@ -40,5 +40,11 @@ decode = { HANDSHAKE:    "handshake"
          , ERR_FILENAME: "ERROR: Bad filename (non ascii text or filename > 256 chars)"
          }
 
-# Swap key: value -> value: key
-encode = { word : hexcode for (hexcode, word) in decode.items() }
+# convert socket data to readable string
+def identify(value):
+  try:
+    return protocol.decode[hex(int(value.decode(), 16))]
+  else:
+    return "not part of the protocol"
+
+

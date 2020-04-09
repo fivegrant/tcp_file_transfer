@@ -1,33 +1,89 @@
-#!/usr/bin/env python3
-
-"""
- host.py - TCP server that listens for a remote server to send file(s)
- Author: Five Grant (fivegrant@bennington.edu)
- Date: 4/2/2020
-"""
-
 import socket
 import hashlib
+from protocol import *
 
-TCP_CONFIG = {  "address":      "127.0.0.1"
-             ,  "port":         1134
-             ,  "buffer_size":  1000 
-             }
+class Host:
+  def __init__(self, address, port, buffer_size):
+    self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.bind(address, port)
+    self.buffer_size = buffer_size
+    self.client = None
+    self.connection = None
+    self.files = []
+  
+  def handshake(self, connection_patience = 1):
+    if connection == None:
+        self.sock.listen(connection_patience)
+        self.connection, self.client = self.sock.accept()
+        stream = self.connection.recv(self.buffer_size)
+        if identify(stream) != "handshake": 
+            # Reject if bad connection
+            # ?? DO I NEED `sock.connect()`
+            self.sock.send(ERR_MODE.encode())
+            self.client = None
+            self.connection = None
+            return False
+        else:
+            #Confirm connection
+            self.sock.send(CONN_SUCCESS.encode())
+            return True
+    else:
+        return True
 
-# Setup Server
-host = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
-host.bind((TCP_CONFIG["address"], TCP_CONFIG["port"]))
-host.listen(1)
+  def download(self, connection_patience = 1):
+    if self.handshake():
+      ### PROBABLY UNNECCESSARY MIGHT DELETE LATER
+      #self.sock.listen(connection_patience)
+      #self.connection, check = self.sock.accept()
+      #if check != self.client:
+      #  self.sock.send(ERR_MODE.encode())
+      ### END of potentially useless code
 
-# Connect to client.py
-host.accept() = connection, client_address
+      comms = self.connection.recv(buffer_size)
+      if identify(meta) != "send":
+        host.send(ERR_MODE.encode())
+        return False
 
-# Reject if bad connection
+      comms = self.connection.recv(buffer_size)
+      while identfy(comms) != "end":
+        if decode(comms) != "bof":
+          host.send(ERR_MODE.encode())
+          continue
 
-# Download files if good connection 
+        name_length = int(self.connection.recv(buffer_size).decode())
+        checksum = int(self.connection.recv(buffer_size).decode())
+        filename = self.connection.recv(name_length).decode() # I dont like this
 
-# Exit 
-connection.close();
+        process = ""
+        stream = self.connection.recv(buffer_size).decode()
+        while protocol.decode[stream.decode()] != "eof":
+          process += stream.decode()  
+          stream = self.connection.recv(buffer_size).decode()
+
+        self.files += [(filename, process, checksum)]  
+        comms = self.connection.recv(buffer_size).decode()
+
+      host.send(CONN_SUCCESS.encode())
+
+      self.client = None
+      self.connection.close()
+      self.connection = None
+      return True
+
+    else:
+      return False
+
+  def save(self, directory):
+    for f in self.files:
+      checksum = hashlib.md5()
+      checksum.update(f[1])
+      if checksum.hexdigest() == f[2]:
+        with open(directory + f[0], 'wb') as product:
+          product.write(f[1])
+        self.files.remove(f)
+          
 
 
 
+# References:
+# https://docs.python.org/3/howto/sockets.html
