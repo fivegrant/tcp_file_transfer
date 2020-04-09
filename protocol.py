@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 """
  protocol.py - A set of dictionaries that make interfacing with
                protocol easier.
@@ -7,6 +6,8 @@
           Satchel Baldwin (satchelbaldwin@bennington.edu)
  Date: 4/9/2020
 """
+
+import struct
 
 # messages
 HANDSHAKE    = 0x01
@@ -20,3 +21,5 @@ CONN_SUCCESS = 0xf0
 ERR_MODE     = 0xF1
 ERR_FILENAME = 0xF2
 
+messages = struct.Struct('B')
+checksum = struct.Struct("q")
