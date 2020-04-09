@@ -28,6 +28,11 @@ class Client:
     def end():
         self.socket.send(messages.pack(END_SEND))
 
-    def upload(file):
+    def upload(filename):
         self.socket.send(messages.pack(BEGIN_FILE))
-
+        meta = metadata.pack(filename);
+        self.socket.send(meta)
+        with open(filename, 'rb') as f:
+            for chunk in iter(lambda: file.read(4096), b""):
+                self.socket.send(chunk)
+    
