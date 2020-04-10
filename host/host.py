@@ -26,24 +26,27 @@ class Host:
     else:
         return False 
 
+  def check_buffer(self):
+    return messages.unpack(self.connection.recv(self.buffer_size))[0]
+    
   def handshake(self, connection_patience = 1):
     if self.connection == None:
         self.sock.listen(connection_patience)
         self.connection, self.client = self.sock.accept()
-        if messages.unpack(self.connection.recv(buffer_size)) != HANDSHAKE: 
-            self.sock.send(messages.pack(self.connection.recv(ERR_MODE)))
+        if self.check_buffer() != HANDSHAKE: 
+            self.connection.send(messages.pack(ERR_MODE))
             self.client = None
             self.connection = None
             return False
         else:
             #Confirm connection
-            self.sock.send(messages.pack(CONN_SUCCESS))
+            self.connection.send(messages.pack(CONN_SUCCESS))
             return True
     else:
         return True
 
   def save(self):
-    stream = self.connection.recv(buffer_size)
+    stream = self.connection.recv(self.buffer_size)
     meta, content = stream[:metadata_length], stream[metadata_length:]
     #Process Metadata
     ( name_length, 
@@ -61,18 +64,18 @@ class Host:
           
   def download(self):
     if self.handshake():
-        if messages.unpack(self.connection.recv(buffer_size)) != BEGIN_SEND:
-            host.send(messages.pack(ERR_MODE))
+        if messages.unpack(self.connection.recv(self.buffer_size)) != BEGIN_SEND:
+            self.connection.send(messages.pack(ERR_MODE))
             return False
 
-        comms = self.connection.recv(buffer_size)
+        comms = self.connection.recv(self.buffer_size)
         while messages.unpack(comms) != END_SEND:
             if messages.unpack(comms) != BEGIN_FILE:
-                host.send(messages.pack(ERR_MODE))
+                self.connection.send(messages.pack(ERR_MODE))
                 continue
             self.save()
-            comms = self.connection.recv(buffer_size)
-        host.send(messages.pack(CONN_SUCCESS))
+            comms = self.connection.recv(self.buffer_size)
+        self.connection.send(messages.pack(CONN_SUCCESS))
         return True
 
     else:

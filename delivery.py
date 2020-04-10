@@ -4,7 +4,6 @@ import sys
 from host.host import Host
 from client.client import Client
 
-
 PORT = 41210
 BUFFER_SIZE = 2048 
 

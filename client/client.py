@@ -7,32 +7,31 @@ from struct import unpack
 
 class Client:
     def __init__(self, ip, port, buffer_size):
-        self.socket = connect(ip, port)
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.buffer_size = buffer_size
-
-    def connect(self, ip, port):
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.connect((ip, port))
-        return sock
+        self.ip = ip
+        self.port = port
 
     def handshake(self):
-        self.socket.send(messages.pack(HANDSHAKE))
-        response = messages.unpack(self.socket.recv(self.buffer_size));
+        self.sock.connect((self.ip, self.port))
+        self.sock.send(messages.pack(HANDSHAKE))
+        print(self.sock.recv(self.buffer_size))
+        response = messages.unpack(self.sock.recv(self.buffer_size))[0]
         if response != CONN_SUCCESS:
             raise Exception("Handshake failed.")
 
     def start(self):
         self.handshake()
-        self.socket.send(messages.pack(BEGIN_SEND))
+        self.sock.send(messages.pack(BEGIN_SEND))
 
     def end(self):
-        self.socket.send(messages.pack(END_SEND))
+        self.sock.send(messages.pack(END_SEND))
 
     def upload(self, filename):
-        self.socket.send(messages.pack(BEGIN_FILE))
-        meta = metadata.pack(filename);
-        self.socket.send(meta)
+        self.sock.send(messages.pack(BEGIN_FILE))
+        meta = metadata.pack(filename)
+        self.sock.send(meta)
         with open(filename, 'rb') as f:
             for chunk in iter(lambda: f.read(self.buffer_size), b""):
-                self.socket.send(chunk)
+                self.sock.send(chunk)
     
