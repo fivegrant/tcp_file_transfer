@@ -2,6 +2,7 @@
 import argparse
 import sys
 from host.receive import *
+from client.client import Client
 
 PORT = 41210
 BUFFER_SIZE = 2048 
@@ -19,8 +20,11 @@ if not (args.send or args.receive):
     sys.exit("Must choose to send or receive.")
 
 if args.send:
-    # host things
-    pass
+    client = Client(args.ip, args.port, BUFFER_SIZE)
+    client.start()
+    for file in args.files:
+        client.upload(file)
+    client.end()
 
 if args.receive:
     # client things
