@@ -30,6 +30,7 @@ messages = struct.Struct('B')
 # 32 bytes allocated for filename
 # unsigned long long for filesize
 metadata = struct.Struct("B32s32sQ")
+metadata_length = 73
 
 # https://stackoverflow.com/questions/3431825/generating-an-md5-checksum-of-a-file
 def pack_metadata(filename):

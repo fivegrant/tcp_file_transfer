@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 import argparse
 import sys
-from host.receive import *
+from host.host import Host
 from client.client import Client
+
 
 PORT = 41210
 BUFFER_SIZE = 2048 
@@ -27,4 +28,6 @@ if args.send:
     client.end()
 
 if args.receive:
-    receive(args.ip, PORT, BUFFER_SIZE, args.directory)
+    host = Host(args.ip, PORT, BUFFER_SIZE, args.directory)
+    host.download()
+    host.close()

@@ -1,5 +1,5 @@
 """
- host.py - Socket interface for defined TCP protocol
+ host.py - TCP server that listens for a remote server to send file(s)
  Author: Five Grant (fivegrant@bennington.edu)
  Date: 4/0/2020
 """
@@ -43,7 +43,7 @@ class Host:
 
   def save(self):
     stream = self.connection.recv(buffer_size)
-    meta, content = stream[:73], stream[73:]
+    meta, content = stream[:metadata_length], stream[metadata_length:]
     #Process Metadata
     ( name_length, 
       checksum, 
