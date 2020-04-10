@@ -27,6 +27,4 @@ if args.send:
     client.end()
 
 if args.receive:
-    # client things
     receive(args.ip, PORT, BUFFER_SIZE, args.directory)
-    pass

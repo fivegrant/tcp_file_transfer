@@ -1,3 +1,9 @@
+"""
+ host.py - Socket interface for defined TCP protocol
+ Author: Five Grant (fivegrant@bennington.edu)
+ Date: 4/0/2020
+"""
+
 import socket
 import hashlib
 from struct import pack, unpack
@@ -50,7 +56,7 @@ class Host:
                 product.write(contents)
             return True
         else:
-          False
+            return False
           
   def download(self):
     if self.handshake():
