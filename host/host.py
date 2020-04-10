@@ -10,10 +10,11 @@ from struct import pack, unpack
 from protocol import *
 
 class Host:
-  def __init__(self, address, port, buffer_size):
+  def __init__(self, address, port, buffer_size, directory):
     self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     self.sock.bind((address, port))
     self.buffer_size = buffer_size
+    self.directory = directory
     self.client = None
     self.connection = None
   
@@ -52,7 +53,7 @@ class Host:
     while len(content) != file_length:
         content += self.connection.recv(buffer_size)
         if(self.verify(checksum, content)):
-            with open(directory + filename, 'wb') as product:
+            with open(self.directory + filename, 'wb') as product:
                 product.write(contents)
             return True
         else:
@@ -72,7 +73,7 @@ class Host:
             self.save()
             comms = self.connection.recv(buffer_size)
         host.send(messages.pack(CONN_SUCCESS))
-      return True
+        return True
 
     else:
       return False
