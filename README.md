@@ -1,7 +1,7 @@
 # Distributed Systems Assignment 2 - TCP File Transfer
 A simple file transfer client using TCP.
 
-##Table of Contents
+## Table of Contents
 - Design
 - Usage
 - Contributing
@@ -46,7 +46,7 @@ Two protocols are used to communicate and transfer data:
 
 ## Usage
 - Send file(s) to to ip - `./delivery.sh send IP FILENAME [FILENAME2 ..]`        
-- Save file to specific location - `./delivery.sh receive IP DIRECTORY
+- Save file to specific location - `./delivery.sh receive IP DIRECTORY`
 - Get help on usage - `./delivery.sh -h` 
 - Get help on specific mode - `./delivery.sh MODE -h` 
 
