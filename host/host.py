@@ -1,79 +1,80 @@
 import socket
 import hashlib
+from struct import pack, unpack
 from protocol import *
 
 class Host:
   def __init__(self, address, port, buffer_size):
     self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.bind((address, port))
+    self.sock.bind((address, port))
     self.buffer_size = buffer_size
     self.client = None
     self.connection = None
-    self.files = []
   
+  def verify(self, check, contents):
+    checksum = hashlib.md5()
+    checksum.update(contents)
+    if checksum.hexdigest() == check:
+        return True
+    else:
+        return False 
+
   def handshake(self, connection_patience = 1):
-    if connection == None:
+    if self.connection == None:
         self.sock.listen(connection_patience)
         self.connection, self.client = self.sock.accept()
-        stream = self.connection.recv(1)
-        if stream.decode() != HANDSHAKE: 
-            self.sock.send(ERR_MODE.encode())
+        if messages.unpack(self.connection.recv(buffer_size)) != HANDSHAKE: 
+            self.sock.send(messages.pack(self.connection.recv(ERR_MODE)))
             self.client = None
             self.connection = None
             return False
         else:
             #Confirm connection
-            self.sock.send(CONN_SUCCESS.encode())
+            self.sock.send(messages.pack(CONN_SUCCESS))
             return True
     else:
         return True
 
-  def download(self, connection_patience = 1):
+  def save(self):
+    stream = self.connection.recv(buffer_size)
+    meta, content = stream[:73], stream[73:]
+    #Process Metadata
+    ( name_length, 
+      checksum, 
+      filename, 
+      file_length ) = metadata.unpack(meta) 
+    while len(content) != file_length:
+        content += self.connection.recv(buffer_size)
+        if(self.verify(checksum, content)):
+            with open(directory + filename, 'wb') as product:
+                product.write(contents)
+            return True
+        else:
+          False
+          
+  def download(self):
     if self.handshake():
-      comms = self.connection.recv(1)
-      if meta.decode() != BEGIN_SEND:
-        host.send(ERR_MODE.encode())
-        return False
+        if messages.unpack(self.connection.recv(buffer_size)) != BEGIN_SEND:
+            host.send(messages.pack(ERR_MODE))
+            return False
 
-      comms = self.connection.recv(1)
-      while comms.decode() != END_SEND:
-        if comms.decode() != BEGIN_FILE:
-          host.send(ERR_MODE.encode())
-          continue
-
-        name_length = int(self.connection.recv(buffer_size).decode())
-        checksum = int(self.connection.recv(buffer_size).decode())
-        filename = self.connection.recv(name_length).decode() # I dont like this
-
-        process = ""
-        stream = self.connection.recv(buffer_size).decode()
-        while stream.decode() != END_FILE:
-          process += stream.decode()  
-          stream = self.connection.recv(buffer_size).decode()
-
-        self.files += [(filename, process, checksum)]  
-        comms = self.connection.recv(buffer_size).decode()
-
-      host.send(CONN_SUCCESS.encode())
-
-      self.client = None
-      self.connection.close()
-      self.connection = None
+        comms = self.connection.recv(buffer_size)
+        while messages.unpack(comms) != END_SEND:
+            if messages.unpack(comms) != BEGIN_FILE:
+                host.send(messages.pack(ERR_MODE))
+                continue
+            self.save()
+            comms = self.connection.recv(buffer_size)
+        host.send(messages.pack(CONN_SUCCESS))
       return True
 
     else:
       return False
 
-  def save(self, directory):
-    for f in self.files:
-      checksum = hashlib.md5()
-      checksum.update(f[1])
-      if checksum.hexdigest() == f[2]:
-        with open(directory + f[0], 'wb') as product:
-          product.write(f[1])
-        self.files.remove(f)
-          
-
+  def close(self):
+    self.client = None
+    self.connection.close()
+    self.connection = None
 
 
 # References:

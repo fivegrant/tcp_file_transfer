@@ -7,12 +7,12 @@
 import socket
 import hashlib
 import protocol
-import host.host
+from host.host import *
 
 def receive(address, port, buffer_size, directory):
-  host = Host(address, port, buffersize)
-  host.download()
-  host.save(directory)
+  host_socket = Host(address, port, buffer_size)
+  host_socket.download()
+  host_socket.close()
 
 
 
