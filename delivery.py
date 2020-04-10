@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
  delivery.py - Starts a TCP client or server to transer file
  Authors: Five Grant (fivegrant@bennington.edu)
