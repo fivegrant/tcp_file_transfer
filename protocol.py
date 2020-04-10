@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
  protocol.py - A set of dictionaries that make interfacing with
                protocol easier.
@@ -16,7 +15,6 @@ HANDSHAKE    = 0x01
 BEGIN_SEND   = 0x02 
 END_SEND     = 0x03
 BEGIN_FILE   = 0x10
-END_FILE     = 0x20
 CONN_SUCCESS = 0xf0
 
 # errors
@@ -28,11 +26,10 @@ messages = struct.Struct('B')
 # one byte (filename length) 0 to 255;
 # one 32-char md5 hexdigest
 # 32 bytes allocated for filename
-# unsigned long long for filesize
+# unsigned long for filesize
 metadata = struct.Struct("B32s32sQ")
 metadata_length = 80
 
-# https://stackoverflow.com/questions/3431825/generating-an-md5-checksum-of-a-file
 def pack_metadata(filename):
   length = len(filename)
   if length > 32:
@@ -44,3 +41,6 @@ def pack_metadata(filename):
       md5.update(chunk)
   hexdigest = md5.hexdigest()
   return metadata.pack(length, hexdigest.encode(), filename.encode(), size)
+
+# References:
+# https://stackoverflow.com/questions/3431825/generating-an-md5-checksum-of-a-file

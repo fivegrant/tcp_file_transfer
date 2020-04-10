@@ -1,7 +1,7 @@
 """
  host.py - TCP server that listens for a remote server to send file(s)
  Author: Five Grant (fivegrant@bennington.edu)
- Date: 4/0/2020
+ Date: 4/10/2020
 """
 
 import socket
@@ -14,10 +14,25 @@ class Host:
     self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     self.sock.bind((address, port))
     self.buffer_size = buffer_size
-    self.directory = directory if directory[-1] == "/" else directory + "/"
+    #Clean up path
+    self.directory = directory \
+        if directory[-1] == "/" else directory + "/"
     self.client = None
     self.connection = None
-  
+    self.cache = b''
+    #Log of all the filenames
+    self.log = []
+
+  def enqueue(self, data):
+    self.cache += data
+
+  def push(self, data):
+    self.cache = data + self.cache
+
+  def pop(self, amount):
+    free, self.cache = self.cache[:amount], self.cache[amount:]
+    return free
+
   def verify(self, check, contents):
     checksum = hashlib.md5()
     checksum.update(contents)
@@ -26,11 +41,15 @@ class Host:
     else:
         return False 
 
-  def receive(self, size = 0):
-    if not size:
-        return messages.unpack(self.connection.recv(self.buffer_size))[0]
+  def receive(self, size = 0, structure = messages, raw = False):
+    size = self.buffer_size if not size else size
+    self.enqueue(self.connection.recv(size))
+    stream = self.pop(size)
+    if not raw:
+        message = structure.unpack(stream)
+        return message[0] if len(message) == 1 else message
     else:
-        return messages.unpack(self.connection.recv(size))[0]
+        return stream
     
   def send(self, message):
     return self.connection.send(messages.pack(message))
@@ -39,7 +58,7 @@ class Host:
     if self.connection == None:
         self.sock.listen(connection_patience)
         self.connection, self.client = self.sock.accept()
-        if self.receive() != HANDSHAKE: 
+        if self.receive(1) != HANDSHAKE: 
             self.send(ERR_MODE)
             self.close()
             return False
@@ -51,28 +70,30 @@ class Host:
         return True
 
   def save(self):
-    stream = self.connection.recv(self.buffer_size)
-    meta, content = stream[:metadata_length], stream[metadata_length:]
     #Process Metadata
     ( name_length, 
       checksum, 
       filename, 
-      file_length ) = metadata.unpack(meta) 
+      file_length ) = self.receive(metadata_length, metadata) 
     filename = filename.decode()[:name_length]
     checksum = checksum.decode()
-    while len(content) != file_length:
-        content += self.connection.recv(self.buffer_size)
-        content, response = content[:file_length], content[file_length:]
-        if(self.verify(checksum, content)):
-            with open(f"{self.directory}{filename}", 'wb') as product:
-                product.write(content)
-            return messages.unpack(response)[0]
-        else:
-            return ERR_MODE
+    content = b''
+    while len(content) < file_length:
+        content += self.receive(raw=True)
+    content, remaining = content[:file_length], content[file_length:]
+    self.push(remaining)
+    if(self.verify(checksum, content)):
+        name = f"{self.directory}{filename}"
+        with open(name, 'wb') as product:
+            product.write(content)
+        self.log += [name]
+        return self.receive(1)
+    else:
+        return ERR_MODE
           
   def download(self):
     if self.handshake():
-        if self.receive() != BEGIN_SEND:
+        if self.receive(1) != BEGIN_SEND:
             self.send(ERR_MODE)
             return False
         comms = self.receive(1)
@@ -93,6 +114,7 @@ class Host:
     except AttributeError:
         pass
     self.connection = None
+    return self.log
 
 
 # References:

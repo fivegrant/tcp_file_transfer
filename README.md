@@ -1,7 +1,7 @@
 # Distributed Systems Assignment 2 - TCP File Transfer
 A simple file transfer client using TCP.
 
-**Table of Contents**
+##Table of Contents
 - Design
 - Usage
 - Contributing
@@ -9,6 +9,7 @@ A simple file transfer client using TCP.
 ## Design
 The file transfer system uses the following components:
 - `delivery.sh` - Takes user input and executes either `client.py` or `host.py`
+- `protocol.sh` - Provides a developer interface for the protocol
 - `client.py` - Send file(s) to specified IP
 - `host.py` (server) - Listens for message from `client.py` and saves the file(s) contents
 
@@ -18,8 +19,9 @@ Two protocols are used to communicate and transfer data:
 | Bytes | Description|
 |---|---|
 |1 | filename length|
-|8 | checksum | 
-|256 | filename|
+|32 | checksum | 
+|32 | filename|
+|8 | filesize|
 |n | content|
 
 *Checksum will use the `hashlib` library.*
@@ -33,7 +35,6 @@ Two protocols are used to communicate and transfer data:
 |    0x02     |   begin sending         |
 |    0x03     |   end connection        |
 |    0x10     |   start file            |
-|    0x20     |   end of file           |
 
 
 #### Response Codes
@@ -44,9 +45,10 @@ Two protocols are used to communicate and transfer data:
 |    0xF2     |       Filename more than 256 characters/non ascii   |
 
 ## Usage
-- Send file(s) to to ip - `./delivery.sh --send IP FILENAME [FILENAME2 ..]`        
-- Save file to specific location - `./delivery.sh --receive DIRECTORY
-- Echo the contents of the file received - `./delivery.sh --receive`
+- Send file(s) to to ip - `./delivery.sh send IP FILENAME [FILENAME2 ..]`        
+- Save file to specific location - `./delivery.sh receive IP DIRECTORY
+- Get help on usage - `./delivery.sh -h` 
+- Get help on specific mode - `./delivery.sh MODE -h` 
 
 ## Contributing
 Contributors include [Five Grant](https://github.com/fivegrant) and [Satchel Baldwin](https://github.com/satchelbaldwin)

@@ -1,4 +1,8 @@
-#!/usr/bin/env python
+"""
+ client.py - TCP client that sends file(s) to a remote server
+ Author: Satchel Baldwin (satchelbaldwin@bennington.edu)
+ Date: 4/10/2020
+"""
 
 import socket
 from protocol import *
