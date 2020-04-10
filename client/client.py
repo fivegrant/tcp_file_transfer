@@ -33,6 +33,6 @@ class Client:
         meta = metadata.pack(filename);
         self.socket.send(meta)
         with open(filename, 'rb') as f:
-            for chunk in iter(lambda: file.read(4096), b""):
+            for chunk in iter(lambda: file.read(buffer), b""):
                 self.socket.send(chunk)
     
