@@ -14,7 +14,7 @@ class Host:
     self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     self.sock.bind((address, port))
     self.buffer_size = buffer_size
-    self.directory = directory
+    self.directory = directory if directory[-1] == "/" else directory + "/"
     self.client = None
     self.connection = None
   
@@ -26,21 +26,26 @@ class Host:
     else:
         return False 
 
-  def check_buffer(self):
-    return messages.unpack(self.connection.recv(self.buffer_size))[0]
+  def receive(self, size = 0):
+    if not size:
+        return messages.unpack(self.connection.recv(self.buffer_size))[0]
+    else:
+        return messages.unpack(self.connection.recv(size))[0]
     
+  def send(self, message):
+    return self.connection.send(messages.pack(message))
+
   def handshake(self, connection_patience = 1):
     if self.connection == None:
         self.sock.listen(connection_patience)
         self.connection, self.client = self.sock.accept()
-        if self.check_buffer() != HANDSHAKE: 
-            self.connection.send(messages.pack(ERR_MODE))
-            self.client = None
-            self.connection = None
+        if self.receive() != HANDSHAKE: 
+            self.send(ERR_MODE)
+            self.close()
             return False
         else:
             #Confirm connection
-            self.connection.send(messages.pack(CONN_SUCCESS))
+            self.send(CONN_SUCCESS)
             return True
     else:
         return True
@@ -53,37 +58,40 @@ class Host:
       checksum, 
       filename, 
       file_length ) = metadata.unpack(meta) 
+    filename = filename.decode()[:name_length]
+    checksum = checksum.decode()
     while len(content) != file_length:
-        content += self.connection.recv(buffer_size)
+        content += self.connection.recv(self.buffer_size)
+        content, response = content[:file_length], content[file_length:]
         if(self.verify(checksum, content)):
-            with open(self.directory + filename, 'wb') as product:
-                product.write(contents)
-            return True
+            with open(f"{self.directory}{filename}", 'wb') as product:
+                product.write(content)
+            return messages.unpack(response)[0]
         else:
-            return False
+            return ERR_MODE
           
   def download(self):
     if self.handshake():
-        if messages.unpack(self.connection.recv(self.buffer_size)) != BEGIN_SEND:
-            self.connection.send(messages.pack(ERR_MODE))
+        if self.receive() != BEGIN_SEND:
+            self.send(ERR_MODE)
             return False
-
-        comms = self.connection.recv(self.buffer_size)
-        while messages.unpack(comms) != END_SEND:
-            if messages.unpack(comms) != BEGIN_FILE:
-                self.connection.send(messages.pack(ERR_MODE))
+        comms = self.receive(1)
+        while comms != END_SEND:
+            if comms != BEGIN_FILE:
+                self.send(ERR_MODE)
                 continue
-            self.save()
-            comms = self.connection.recv(self.buffer_size)
-        self.connection.send(messages.pack(CONN_SUCCESS))
+            comms = self.save()
+        self.send(CONN_SUCCESS)
         return True
-
     else:
       return False
 
   def close(self):
     self.client = None
-    self.connection.close()
+    try:
+        self.connection.close()
+    except AttributeError:
+        pass
     self.connection = None
 
 

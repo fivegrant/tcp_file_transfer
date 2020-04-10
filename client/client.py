@@ -15,7 +15,6 @@ class Client:
     def handshake(self):
         self.sock.connect((self.ip, self.port))
         self.sock.send(messages.pack(HANDSHAKE))
-        print(self.sock.recv(self.buffer_size))
         response = messages.unpack(self.sock.recv(self.buffer_size))[0]
         if response != CONN_SUCCESS:
             raise Exception("Handshake failed.")
@@ -29,7 +28,7 @@ class Client:
 
     def upload(self, filename):
         self.sock.send(messages.pack(BEGIN_FILE))
-        meta = metadata.pack(filename)
+        meta = pack_metadata(filename)
         self.sock.send(meta)
         with open(filename, 'rb') as f:
             for chunk in iter(lambda: f.read(self.buffer_size), b""):
